@@ -14,10 +14,21 @@ code {
     monospace;
 }
 
-.main {
-  margin-top: 50px;
-  margin-left: 210px;
-  color: white;
-  position: absolute;
+.container {
+  border: 1px red solid;
   height: 2500px;
+  color: #fff;
+  margin-left: 250px;
+}
+
+.content {
+  margin-top: 50px;
+  padding-top: 20px;
+  position: relative;
+}
+
+.quest_widget {
+  background-color: #213137;
+  height: 50px;
+  border-radius: 2px;
 }
