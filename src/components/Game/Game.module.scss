@@ -2,16 +2,17 @@
     display: grid;
     grid-template-columns: 4fr 1fr;
     column-gap: 20px;
-    border: greenyellow 1px solid;
     margin-top: 20px;
     height: 500px;
     .game_body {
         height: 200px;
+        border-radius: 2px;
         background-color: #00bad9;
         position: relative;
     }
     .game_rightBar {
-        border: 1px violet solid;
+        border-radius: 2px;
+        background-color: #213137;
         height: 200px;
     }
 }
