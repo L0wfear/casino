@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useCallback, } from 'react';
 import styled from "styled-components";
+import { 
+    changeDeciMinutes, changeMinutes, changeDeciSeconds, changeSeconds, changeTime, TimerStateType, TimerActionsTypes 
+} from '../../../redux/reducers/timerReducer/timerReducer';
+import { connect } from 'react-redux';
+import { StateType } from '../../../redux/store';
 
 const STimer = styled.div`
     position: absolute;
@@ -20,10 +25,11 @@ const STimerBlock = styled.div`
     border-radius: 2px;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    overflow: hidden;
 `;
 
-const STimerBlockNumber = styled.div`
-    height: 100%; 
+const STimerBlockNumber = styled.div<{ top?: number, transition?: number }>`
+    height: 50px; 
     width: 100%;
     font: normal 700 45px / 45px 'Pt Sans';
     color: white;
@@ -31,71 +37,133 @@ const STimerBlockNumber = styled.div`
     justify-content: center;
     align-content: center;
     position: relative;
+    top: ${props => props.top || 0}%;
+    transition: ${props => props.transition || 0}s;
     &:before {
         content: '';
         position: absolute;
-        height: 50%;
+        height: 27px;
         width: 100%;
         background-color: black;
         opacity: 0.5;
     }
-`
+`;
 
 const SDoubleDotes = styled.div`
     color: rgba(0, 0, 0, 0.3);
     font: normal 700 45px / 45px 'Pt Sans';
 `;
-const Timer = () => {
 
-    const [minutes, setMinutes] = useState(0);
-    const [deciMinutes, setDeciMinutes] = useState(0);
-    const [seconds, setSeconds] = useState(0);
-    const [deciSeconds, setDeciSeconds] = useState(0);
-    
+type TimerProps = TimerStateType & TimerActionsTypes;
+
+const Timer: React.FC<TimerProps> = (props) => {
+
+    const {
+        deciMinutes,
+        minutes,
+        deciSeconds,
+        seconds,
+        time,
+        changeDeciMinutes, 
+        changeMinutes, 
+        changeDeciSeconds, 
+        changeSeconds, 
+        changeTime,
+    } = props;
+
+    const setTimerTime = useCallback((time, setter) => {
+            setter({time, showStatic: false, top: 50, transition: 0.3});
+            setTimeout(() => {
+                setter({time, showStatic: true, top: -50, transition: 0})
+            }, 500)
+        },
+    []);
+
     useEffect(() => {
-        let random = Math.round(Math.random() * 200);
-
         const intervalId = setInterval(() => {
-            if(random > 0) {
-                random -= 1;
-                let restMinutes = Math.floor(random / 60);
-                let deciMinutes = Math.floor(restMinutes / 10);
-                let minutes = restMinutes - deciMinutes * 10;
-                let restSeconds = random % 60;
-                let deciSeconds = Math.floor(restSeconds / 10);
-                let seconds = restSeconds - deciSeconds * 10;
-                setMinutes(minutes);
-                setSeconds(seconds);
-                setDeciMinutes(deciMinutes);
-                setDeciSeconds(deciSeconds);
+            if(time === 0) {
+                changeTime(Math.round(Math.random() * 200))
             }
+            if (time > 0) {
+                changeTime(time - 1)
+                let restMinutes = Math.floor(time / 60);
+                let nextDeciMinutes = Math.floor(restMinutes / 10);
+                let nextMinutes = restMinutes - nextDeciMinutes * 10;
+                let restSeconds = time % 60;
+                let nextDeciSeconds = Math.floor(restSeconds / 10);
+                let nextSeconds = restSeconds - nextDeciSeconds * 10;
+    
+                if (seconds.time !== nextSeconds) {
+                    setTimerTime(nextSeconds, changeSeconds)
+                }
+                if (minutes.time !== nextMinutes) {
+                    setTimerTime(nextMinutes, changeMinutes)
+                }
+                if (deciMinutes.time !== nextDeciMinutes) {
+                    setTimerTime(nextDeciMinutes, changeDeciMinutes)
+                }
+                if (deciSeconds.time !== nextDeciSeconds) {
+                    setTimerTime(nextDeciSeconds, changeDeciSeconds)
+                }
+
+            } 
         }, 1000)
 
         return () => clearInterval(intervalId);
     }, 
-    []);
+        [
+         setTimerTime, 
+         time, 
+         seconds, 
+         minutes, 
+         deciSeconds,
+         deciMinutes, 
+         changeDeciMinutes, 
+         changeMinutes, 
+         changeDeciSeconds, 
+         changeSeconds, 
+         changeTime,
+        ]);
 
     return (
         <STimer>
             <STimerBlock>
-                <STimerBlockNumber>
-                    {deciMinutes}
-                </STimerBlockNumber>
-                <STimerBlockNumber>
-                    {minutes}
-                </STimerBlockNumber>
+               {[deciMinutes, minutes].map(el => (
+                   el.showStatic
+                    ? <STimerBlockNumber>
+                        {el.time}
+                    </STimerBlockNumber>
+                    : <STimerBlockNumber top={el.top || -50} transition={el.transition}>
+                        <STimerBlockNumber>{el.time}</STimerBlockNumber>
+                        <STimerBlockNumber>{el.time === 9 ? 0 : el.time + 1}</STimerBlockNumber>
+                    </STimerBlockNumber>
+               ))}
             </STimerBlock>
             <SDoubleDotes>:</SDoubleDotes>
             <STimerBlock>
-                <STimerBlockNumber>
-                    {deciSeconds}
-                </STimerBlockNumber>
-                <STimerBlockNumber>
-                    {seconds}
-                </STimerBlockNumber>
+            {[deciSeconds, seconds].map(el => (
+                   el.showStatic
+                    ? <STimerBlockNumber>
+                        {el.time}
+                    </STimerBlockNumber>
+                    : <STimerBlockNumber top={el.top || -50} transition={el.transition}>
+                        <STimerBlockNumber>{el.time}</STimerBlockNumber>
+                        <STimerBlockNumber>{el.time === 9 ? 0 : el.time + 1}</STimerBlockNumber>
+                    </STimerBlockNumber>
+               ))}
             </STimerBlock>
         </STimer>
     )
 }
 
-export default Timer;
+const mapStateToProps = (state: StateType) => {
+    return ({
+        deciMinutes: state.timerData.deciMinutes,
+        minutes: state.timerData.minutes,
+        deciSeconds: state.timerData.deciSeconds,
+        seconds: state.timerData.seconds,
+        time: state.timerData.time,
+    })
+}
+
+export default connect(mapStateToProps, {changeDeciMinutes, changeMinutes, changeDeciSeconds, changeSeconds, changeTime})(Timer);

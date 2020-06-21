@@ -1,11 +1,18 @@
 
-import {createStore, applyMiddleware} from 'redux';
+import {createStore, applyMiddleware, combineReducers} from 'redux';
 import thunkMiddleware from 'redux-thunk';
+import timerReducer, { TimerStateType } from './reducers/timerReducer/timerReducer';
 
-const defaultReducer = (state = {}, action: any) => {
-    return state
+const reducers = combineReducers({
+    timerData: timerReducer,
+});
+
+const store = createStore(reducers, applyMiddleware(thunkMiddleware));
+
+export type StateType = {
+    timerData: TimerStateType
 }
 
-const store = createStore(defaultReducer, applyMiddleware(thunkMiddleware));
+
 
 export default store; 
